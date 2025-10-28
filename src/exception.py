@@ -1,4 +1,6 @@
-import sys
+import sys , os
+# Add the src folder to Python path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 from logger import logging
 
 def error_message_detail(error,error_detail:sys):
