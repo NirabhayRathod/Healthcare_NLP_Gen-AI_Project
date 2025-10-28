@@ -13,7 +13,7 @@ os.makedirs('data', exist_ok=True)
 os.makedirs('models', exist_ok=True)
 
 # Load data
-data = pd.read_csv(r'D:\Healthcare-NLP-and-Generative-AI-Projects\data\cleaned_drugCom_raw.csv')
+data = pd.read_csv(r'D:\HEALTHCARE_NLP_GEN-AI-Projects\data\cleaned_drugCom_raw.csv')
 
 def clean_text(text):
     if isinstance(text, float):

@@ -1,5 +1,7 @@
 import pandas as pd
-import os 
+import os , sys
+from logger import logging
+from exception import CustomException
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -12,8 +14,12 @@ from langchain.chains.summarize import load_summarize_chain
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-original_data = pd.read_csv(r'D:\Healthcare-NLP-and-Generative-AI-Projects\data\final_drug_review_data.csv')
-
+logging.info('dataset reading started for Summarization')
+try:
+    original_data = pd.read_csv(r'D:\HEALTHCARE_NLP_GEN-AI_PROJECT\data\final_drug_review_data.csv')
+    logging.info('dataset reading completed for summarizatin')
+except Exception as e:
+    raise CustomException(e, sys)
 # combine whole review of that drugName with permanent sampling
 def get_combined_reviews(drug_name):
     drug_reviews = original_data[original_data['drugName'] == drug_name]['review']

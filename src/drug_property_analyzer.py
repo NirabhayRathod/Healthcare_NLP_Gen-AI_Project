@@ -1,7 +1,17 @@
 import pandas as pd
+import sys , os
+# Add the src folder to Python path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+from logger import logging
+from exception import CustomException
 
-data = pd.read_csv(r'D:\Healthcare-NLP-and-Generative-AI-Projects\data\final_drug_review_data.csv')
-
+logging.info("data reading started for 'drug property analyzer'")
+try:
+    data = pd.read_csv(r'D:\HEALTHCARE_NLP_GEN-AI_PROJECT\data\final_drug_review_data.csv')
+    logging.info("data reading completed for 'drug property analyzer'")
+except Exception as e:
+    raise CustomException(e ,sys)
+ 
 medical_properties = {
     # Side Effects - EXPANDED
     'causes_drowsiness': [
@@ -120,7 +130,7 @@ medical_properties = {
 }
 
 def get_drug_property_percentages(drug_name):
-    
+    logging.info(' get_drug_property_percentages function called for getting percentage of drug property mainsion by people')
     # 1. Filter reviews for specific drug
     drug_reviews = data[data['drugName'] == drug_name]
     
