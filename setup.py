@@ -15,9 +15,9 @@ def function(file_path:str)->List[str]:
     return requirements
 
 setup(
-    name='ML_Project',
+    name='Drug Review Analytics & Insights Platform',
     version='0.0.1',
-    author='Nirabhay',
+    author='Nirabhay Singh Rathod',
     author_email='nirbhay105633016@gmail.com',
     packages=find_packages(),
     install_requires=function('requirements.txt')
