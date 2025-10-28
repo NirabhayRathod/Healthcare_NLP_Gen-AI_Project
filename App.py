@@ -2,15 +2,23 @@ import streamlit as st
 import pandas as pd
 import sys
 import os
-
 # Add the src folder to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+from src.exception import CustomException
+from src.logger import logging
+
+
 from src.drug_property_analyzer import get_drug_property_percentages
 from src.summarization import call_summarization
 
 # Load data
-data = pd.read_csv(r'D:\Healthcare-NLP-and-Generative-AI-Projects\data\final_drug_review_data.csv')
-
+logging.info('dataset reading started for our Streamlit App')
+try:
+    data = pd.read_csv(r'D:\HEALTHCARE_NLP_GEN-AI_PROJECT\data\final_drug_review_data.csv')
+    logging.info('data reading completed')
+except Exception as e:
+    raise CustomException(e ,sys)
 # Streamlit app
 def function():
     # Custom CSS for better UI
@@ -77,7 +85,7 @@ def function():
         # 🔹 Summary section
         st.markdown(f"<div class='big-info'>📝 Summary of Reviews on <b>{input_drugname}</b></div>", unsafe_allow_html=True)
         st.markdown(f"<div class='small-success'>{call_summarization(input_drugname)}</div>", unsafe_allow_html=True)
-
+        logging.info('Streamlit App worked Correctly')
 # Run the app
 if __name__ == "__main__":
     function()
