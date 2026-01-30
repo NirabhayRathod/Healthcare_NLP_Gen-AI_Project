@@ -16,7 +16,7 @@ def function(file_path:str)->List[str]:
 
 setup(
     name='Drug Review Analytics & Insights Platform',
-    version='0.0.1',
+    version='2.0',
     author='Nirabhay Singh Rathod',
     author_email='nirbhay105633016@gmail.com',
     packages=find_packages(),
