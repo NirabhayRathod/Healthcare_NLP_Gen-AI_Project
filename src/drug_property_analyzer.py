@@ -1,16 +1,38 @@
 import pandas as pd
-import sys , os
+import sys, os
+from sqlalchemy import create_engine
+from dotenv import load_dotenv
+
 # Add the src folder to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+
 from logger import logging
 from exception import CustomException
 
-logging.info("data reading started for 'drug property analyzer'")
+load_dotenv()
+
+# DATABASE CONNECTION
 try:
-    data = pd.read_csv(r'D:\HEALTHCARE_NLP_GEN-AI_PROJECT\data\final_drug_review_data.csv')
-    logging.info("data reading completed for 'drug property analyzer'")
+    engine = create_engine(
+        f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+        f"@{os.getenv('DB_HOST')}:{int(os.getenv('DB_PORT'))}/{os.getenv('DB_NAME')}",
+        pool_pre_ping=True
+    )
+    logging.info("Connected to AWS RDS successfully")
 except Exception as e:
-    raise CustomException(e ,sys)
+    raise CustomException(e, sys)
+
+logging.info("Data reading started for 'drug property analyzer'")
+
+try:
+    query = """
+    SELECT drugName, conditions, review, rating
+    FROM processed_data
+    """
+    data = pd.read_sql(query, engine)
+    logging.info("Data reading completed from AWS RDS")
+except Exception as e:
+    raise CustomException(e, sys)
  
 medical_properties = {
     # Side Effects - EXPANDED
@@ -130,47 +152,40 @@ medical_properties = {
 }
 
 def get_drug_property_percentages(drug_name):
-    logging.info(' get_drug_property_percentages function called for getting percentage of drug property mainsion by people')
-    # 1. Filter reviews for specific drug
+    logging.info("get_drug_property_percentages function called")
+
     drug_reviews = data[data['drugName'] == drug_name]
-    
-    if len(drug_reviews) == 0:
+
+    if drug_reviews.empty:
         return f"No reviews found for {drug_name}"
-    
-    # 2. Calculate percentages for specific drug
+
     results = {}
     for property_name, keywords in medical_properties.items():
         pattern = '|'.join(keywords)
         matches = drug_reviews['review'].str.contains(pattern, case=False, na=False)
         percentage = (matches.sum() / len(drug_reviews)) * 100
         results[property_name] = round(percentage, 1)
-    
-    # 3. top conditions for this drug
-    condition_counts = drug_reviews['condition'].value_counts()
-    top_conditions = condition_counts.head(3)  # Top 3 conditions
-    
-    # 4. Format output
+
+    # Top conditions
+    condition_counts = drug_reviews['conditions'].value_counts().head(3)
+
     output_lines = []
-    
-    # Add condition insights first
-    output_lines.append(f" **Most Common Conditions for {drug_name}:**")
-    for condition, count in top_conditions.items():
-        percentage = (count / len(drug_reviews)) * 100
-        output_lines.append(f"- {condition}: {count} reviews ({percentage:.1f}%)")
-    
-    output_lines.append("")
-    
-    # Add medical properties
-    output_lines.append(" **Medical Properties Analysis:**")
+    output_lines.append(f"**Most Common Conditions for {drug_name}:**")
+
+    for condition, count in condition_counts.items():
+        pct = (count / len(drug_reviews)) * 100
+        output_lines.append(f"- {condition}: {count} reviews ({pct:.1f}%)")
+
+    output_lines.append("\n**Medical Properties Analysis:**")
     for prop, pct in results.items():
-        readable_name = prop.replace('_', ' ').title()
-        output_lines.append(f"- \"{pct}% of reviews mention {readable_name}\"")
-    
-    # Add overall stats
-    output_lines.append("")
-    output_lines.append(f" **Overall Stats:** {len(drug_reviews)} total reviews, Avg rating: {drug_reviews['rating'].mean():.1f}/10")
-    
+        output_lines.append(f"- {pct}% of reviews mention {prop.replace('_', ' ').title()}")
+
+    output_lines.append(
+        f"\n**Overall Stats:** {len(drug_reviews)} reviews, "
+        f"Avg rating: {drug_reviews['rating'].mean():.1f}/10"
+    )
+
     return output_lines
 
-# Example usage:
+# EXAMPLE USAGE
 print("\n".join(get_drug_property_percentages("Integra")))

@@ -2,21 +2,44 @@ import pandas as pd
 import numpy as np
 import nltk
 import re
-import string
 import os
+import sys
+from sqlalchemy import create_engine
+from dotenv import load_dotenv
+
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
-# Create directories if they don't exist
-os.makedirs('data', exist_ok=True)
-os.makedirs('models', exist_ok=True)
+load_dotenv()
 
-# Load data
-data = pd.read_csv(r'D:\HEALTHCARE_NLP_GEN-AI-Projects\data\cleaned_drugCom_raw.csv')
+engine = create_engine(
+    f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+    f"@{os.getenv('DB_HOST')}:{int(os.getenv('DB_PORT'))}/{os.getenv('DB_NAME')}",
+    pool_pre_ping=True
+)
+
+nltk.download("punkt")
+nltk.download("stopwords")
+nltk.download("wordnet")
+
+query = """
+SELECT
+    uniqueID,
+    drugName,
+    conditions,
+    review,
+    rating,
+    date,
+    usefulCount
+FROM raw_data
+"""
+
+data = pd.read_sql(query, engine)
+
 
 def clean_text(text):
-    if isinstance(text, float):
+    if not isinstance(text, str):
         return ""
     text = text.lower()
     text = re.sub(r'&#?\w+;|http\S+|[^a-zA-Z\s]', '', text)
@@ -25,39 +48,65 @@ def clean_text(text):
 
 def tokenize_and_remove_stopwords(text):
     if not text:
-        return []
+        return ""
     tokens = word_tokenize(text)
-    stop_words = set(stopwords.words('english'))
-    filtered_tokens = [word for word in tokens if word not in stop_words and len(word) > 2]
-    
-    # Lemmatization
+    stop_words = set(stopwords.words("english"))
+    tokens = [t for t in tokens if t not in stop_words and len(t) > 2]
+
     lemmatizer = WordNetLemmatizer()
-    lemmatized_tokens = [lemmatizer.lemmatize(token) for token in filtered_tokens]
-    
-    return ' '.join(lemmatized_tokens)
+    tokens = [lemmatizer.lemmatize(t) for t in tokens]
 
-# Apply text preprocessing
-data['review'] = data['review'].apply(clean_text)
-data['review'] = data['review'].apply(tokenize_and_remove_stopwords) 
+    return " ".join(tokens)
 
-benefit_keywords = ['effective', 'works', 'relief', 'better', 'improved', 'help', 'helps',
-                   'good', 'great', 'excellent', 'amazing', 'life changing', 'wonderful']
+data["review"] = data["review"].apply(clean_text)
+data["review"] = data["review"].apply(tokenize_and_remove_stopwords)
 
-side_effect_keywords = ['side effect', 'nausea', 'headache', 'dizziness', 'fatigue',
-                       'weight gain', 'insomnia', 'pain', 'vomiting', 'drowsiness']
 
-data['benefit_mentions'] = data['review'].apply(
-    lambda x: sum(1 for word in benefit_keywords if word in x)
-)
-
-data['side_effect_mentions'] = data['review'].apply(
-    lambda x: sum(1 for word in side_effect_keywords if word in x)
-)
-
-essential_columns = [
-    'drugName', 'condition', 'review', 'rating', 'date', 
-    'usefulCount', 'benefit_mentions', 'side_effect_mentions'
+benefit_keywords = [
+    "effective", "works", "relief", "better", "improved",
+    "help", "helps", "good", "great", "excellent",
+    "amazing", "life changing", "wonderful"
 ]
-data = data[essential_columns]
 
-data.to_csv(r'D:\Healthcare-NLP-and-Generative-AI-Projects\data\final_drug_review_data.csv', index=False)
+side_effect_keywords = [
+    "side effect", "nausea", "headache", "dizziness",
+    "fatigue", "weight gain", "insomnia",
+    "pain", "vomiting", "drowsiness"
+]
+
+data["benefit_mentions"] = data["review"].apply(
+    lambda x: sum(1 for w in benefit_keywords if w in x)
+)
+
+data["side_effect_mentions"] = data["review"].apply(
+    lambda x: sum(1 for w in side_effect_keywords if w in x)
+)
+
+data["review_date"] = pd.to_datetime(
+    data["date"], format="%d-%b-%y", errors="coerce"
+)
+
+processed_df = data[
+    [
+        "uniqueID",
+        "drugName",
+        "conditions",
+        "review",
+        "rating",
+        "review_date",
+        "usefulCount",
+        "benefit_mentions",
+        "side_effect_mentions",
+    ]
+]
+
+
+processed_df.to_sql(
+    name="processed_data",
+    con=engine,
+    if_exists="append",
+    index=False,
+    chunksize=1000
+)
+
+print("Processed data successfully stored in AWS RDS (processed_data)")
