@@ -1,14 +1,11 @@
 import pandas as pd
 import os, sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
-
 from logger import logging
 from exception import CustomException
 
-# -------------------------------
-# ENV & DB SETUP
-# -------------------------------
 load_dotenv()
 
 api_key = os.getenv("GROQ_API_KEY")
@@ -44,7 +41,7 @@ try:
     FROM processed_data
     """
     original_data = pd.read_sql(query, engine)
-    logging.info("Dataset reading completed from AWS RDS")
+    logging.info("Dataset reading completed from AWS RDS to summarize the review")
 except Exception as e:
     raise CustomException(e, sys)
 

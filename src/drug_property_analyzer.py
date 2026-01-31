@@ -1,11 +1,8 @@
 import pandas as pd
 import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
-
-# Add the src folder to Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
-
 from logger import logging
 from exception import CustomException
 
