@@ -6,6 +6,7 @@ matplotlib
 seaborn
 langchain
 langchain-core
+langchain_groq
 langchain-community
 groq
 python-dotenv
