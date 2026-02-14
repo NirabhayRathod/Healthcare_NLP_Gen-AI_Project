@@ -1,8 +1,14 @@
-astro
+.astro
 .git
 .env
-airflow_settings.yaml
 logs/
 .venv
+venv/
+__pycache__/
+*.pyc
 airflow.db
 airflow.cfg
+airflow/
+tests/
+data/
+drugCom_raw.csv

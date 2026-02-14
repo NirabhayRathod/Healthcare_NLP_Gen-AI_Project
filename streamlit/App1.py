@@ -3,11 +3,10 @@ import pandas as pd
 import sys
 import os
 from pathlib import Path
+from sqlalchemy import create_engine
 
 # Add the src folder to Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
-
-from src.exception import CustomException
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.logger import logging
 from src.drug_property_analyzer import get_drug_property_percentages
 from src.summarization import call_summarization
@@ -15,10 +14,24 @@ from src.summarization import call_summarization
 # Load data
 logging.info('dataset reading started for our Streamlit App')
 try:
-    data = pd.read_csv(r'D:\HEALTHCARE_NLP_GEN-AI_PROJECT\data\final_drug_review_data.csv')
-    logging.info('data reading completed')
+    engine = create_engine(
+        f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+        f"@{os.getenv('DB_HOST')}:{int(os.getenv('DB_PORT'))}/{os.getenv('DB_NAME')}",
+        pool_pre_ping=True
+    )
+    logging.info("Connected to AWS RDS successfully")
 except Exception as e:
-    raise CustomException(e, sys)
+    raise Exception(e, sys)
+
+try:
+    query = """
+    SELECT *
+    FROM processed_data
+    """
+    data = pd.read_sql(query, engine)
+    logging.info("Dataset reading completed from AWS RDS to summarize the review")
+except Exception as e:
+    raise Exception(e, sys)
 
 # Page configuration
 st.set_page_config(
@@ -586,7 +599,7 @@ def introduction_page():
     with metric_col3:
         st.markdown(f"""
             <div class='metric-card'>
-                <h3>{len(data['condition'].unique()):,}</h3>
+                <h3>{len(data['conditions'].unique()):,}</h3>
                 <p>Medical Conditions</p>
             </div>
         """, unsafe_allow_html=True)
@@ -603,7 +616,7 @@ def introduction_page():
     # Sample Data Preview
     st.markdown('<h2 class="section-title">🔍 Data Preview</h2>', unsafe_allow_html=True)
     
-    sample_data = data[['drugName', 'condition', 'rating', 'review', 'usefulCount']].head(10)
+    sample_data = data[['drugName', 'conditions', 'rating', 'review', 'usefulCount']].head(10)
     st.dataframe(sample_data, use_container_width=True)
     
     # Top Drugs by Review Count
@@ -639,110 +652,127 @@ def introduction_page():
 
 def analysis_page():
     """Main analysis page with drug selection and insights"""
-    
+
     st.markdown('<h1 class="main-title">🔍 Drug Analysis Dashboard</h1>', unsafe_allow_html=True)
-    
+
     # Back button
     col1, col2 = st.columns([1, 5])
     with col1:
         if st.button("⬅ Back to Introduction"):
             st.session_state.page = "introduction"
             st.rerun()
-    
+
     st.markdown("---")
-    
-    # Sidebar for drug selection
+
+    # ==========================
+    # Compact Sidebar
+    # ==========================
     st.sidebar.markdown("""
-        <div style='background: linear-gradient(135deg, #1e2229, #2d3746); padding: 1rem; border-radius: 10px; margin-bottom: 1rem;'>
+        <div style='background: linear-gradient(135deg, #1e2229, #2d3746);
+                    padding: 0.8rem; border-radius: 10px; margin-bottom: 1rem;'>
             <h3 style='color: #FF6B6B; margin: 0;'>🔍 Drug Selection</h3>
         </div>
     """, unsafe_allow_html=True)
-    
-    drug_names = data['drugName'].unique().tolist()
+
+    drug_names = sorted(data['drugName'].unique().tolist())
+
     input_drugname = st.sidebar.selectbox(
         "Choose your drug:",
         drug_names,
-        placeholder="Type to search...",
         key="drug_selector"
     )
-    
-    # Additional filters in sidebar
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("""
-        <div style='background: linear-gradient(135deg, #1e2229, #2d3746); padding: 1rem; border-radius: 10px;'>
-            <h3 style='color: #FF6B6B; margin: 0;'>📈 Quick Stats</h3>
-        </div>
-    """, unsafe_allow_html=True)
-    
+
     if input_drugname:
         drug_data = data[data['drugName'] == input_drugname]
         total_reviews = len(drug_data)
         avg_rating = drug_data['rating'].mean()
-        top_condition = drug_data['condition'].mode().iloc[0] if not drug_data.empty else "N/A"
-        
+        top_condition = drug_data['conditions'].mode().iloc[0] if not drug_data.empty else "N/A"
+
+        st.sidebar.markdown("---")
         st.sidebar.markdown(f"""
-            <div style='color: #CCCCCC; margin-top: 1rem;'>
+            <div style='font-size:0.9rem; color:#CCCCCC;'>
                 <p><strong>Total Reviews:</strong> {total_reviews:,}</p>
-                <p><strong>Average Rating:</strong> {avg_rating:.1f}/10</p>
-                <p><strong>Most Common Condition:</strong> {top_condition}</p>
+                <p><strong>Avg Rating:</strong> {avg_rating:.1f}/10</p>
+                <p><strong>Top Condition:</strong> {top_condition}</p>
             </div>
         """, unsafe_allow_html=True)
-    
-    # Main content area
+
+    # ==========================
+    # MAIN CONTENT
+    # ==========================
     if input_drugname:
+
         st.markdown(f"""
             <div style='text-align: center; background: linear-gradient(135deg, #1e2229, #2d3746); 
                         padding: 1.5rem; border-radius: 15px; margin-bottom: 2rem;'>
                 <h2 style='color: #FF6B6B; margin: 0;'>Analysis for: {input_drugname}</h2>
             </div>
         """, unsafe_allow_html=True)
-        
-        # Drug Property Analysis - Now using rectangle format
+
+        # =====================================
+        # 1️⃣ PROPERTY ANALYSIS (FIRST)
+        # =====================================
         try:
             property_results = get_drug_property_percentages(input_drugname)
             create_property_analysis(input_drugname, property_results)
         except Exception as e:
             st.error(f"Error in drug property analysis: {str(e)}")
-        
-        # Summary Section - Now using the new format
+
+        # =====================================
+        # 2️⃣ GRAPHS (SECOND)
+        # =====================================
+        drug_info = data[data['drugName'] == input_drugname]
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("""
+                <div class='analysis-section'>
+                    <h3 style='color: #FF6B6B;'>📊 Rating Distribution</h3>
+            """, unsafe_allow_html=True)
+
+            rating_counts = drug_info['rating'].value_counts().sort_index()
+            st.bar_chart(rating_counts)
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        with col2:
+            st.markdown("""
+                <div class='analysis-section'>
+                    <h3 style='color: #FF6B6B;'>🎯 Top Conditions</h3>
+            """, unsafe_allow_html=True)
+
+            condition_counts = drug_info['conditions'].value_counts().head(5)
+
+            st.dataframe(
+                condition_counts.reset_index().rename(
+                    columns={'index': 'Condition', 'conditions': 'Count'}
+                ),
+                use_container_width=True,
+                hide_index=True
+            )
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # =====================================
+        # 3️⃣ SUMMARY (LAST - WITH LOADING)
+        # =====================================
+        st.markdown("<br><br>", unsafe_allow_html=True)
+
         try:
-            summary = call_summarization(input_drugname)
+            with st.spinner("Generating AI-powered summary... Please wait ⏳"):
+                summary = call_summarization(input_drugname)
+
             create_summary_section(input_drugname, summary)
+
         except Exception as e:
             st.error(f"Error in summarization: {str(e)}")
-        
-        # Additional Drug Information
-        if input_drugname in data['drugName'].values:
-            drug_info = data[data['drugName'] == input_drugname]
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("""
-                    <div class='analysis-section'>
-                        <h3 style='color: #FF6B6B; margin-top: 0;'>📊 Rating Distribution</h3>
-                """, unsafe_allow_html=True)
-                
-                rating_counts = drug_info['rating'].value_counts().sort_index()
-                st.bar_chart(rating_counts)
-                st.markdown("</div>", unsafe_allow_html=True)
-            
-            with col2:
-                st.markdown("""
-                    <div class='analysis-section'>
-                        <h3 style='color: #FF6B6B; margin-top: 0;'>🎯 Top Conditions</h3>
-                """, unsafe_allow_html=True)
-                
-                condition_counts = drug_info['condition'].value_counts().head(5)
-                st.dataframe(condition_counts.reset_index().rename(
-                    columns={'index': 'Condition', 'condition': 'Count'}
-                ), use_container_width=True, hide_index=True)
-                st.markdown("</div>", unsafe_allow_html=True)
-        
+
         logging.info('Streamlit App worked Correctly')
-    
+
     else:
         st.info("👈 Please select a drug from the sidebar to begin analysis.")
+
 
 def main():
     """Main function to handle page navigation"""

@@ -1,14 +1,16 @@
 import pandas as pd
-import os, sys
+import os
+import sys
+
+# Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from logger import logging
-from exception import CustomException
 
 load_dotenv()
 
-api_key = os.getenv("GROQ_API_KEY")
 
 try:
     engine = create_engine(
@@ -18,11 +20,11 @@ try:
     )
     logging.info("Connected to AWS RDS successfully")
 except Exception as e:
-    raise CustomException(e, sys)
+    raise Exception(e, sys)
 
-# -------------------------------
-# LLM SETUP
-# -------------------------------
+
+api_key = os.getenv("GROQ_API_KEY")
+
 from langchain_groq import ChatGroq
 llm = ChatGroq(model="llama-3.1-8b-instant", api_key=api_key)
 
@@ -30,39 +32,39 @@ from langchain_core.prompts import PromptTemplate
 from langchain.chains.summarize import load_summarize_chain
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-# -------------------------------
-# READ DATA FROM AWS RDS
-# -------------------------------
-logging.info("Dataset reading started for Summarization")
-
-try:
-    query = """
-    SELECT drugName, review
-    FROM processed_data
-    """
-    original_data = pd.read_sql(query, engine)
-    logging.info("Dataset reading completed from AWS RDS to summarize the review")
-except Exception as e:
-    raise CustomException(e, sys)
-
 
 def get_combined_reviews(drug_name):
-    drug_reviews = original_data[
-        original_data["drugName"] == drug_name
-    ]["review"]
+    logging.info(f"Fetching reviews for {drug_name} from AWS RDS")
+
+    try:
+        query = """
+        SELECT review
+        FROM processed_data
+        WHERE drugName = %s
+        LIMIT 200
+        """
+
+        drug_reviews = pd.read_sql(
+            query,
+            engine,
+            params=(drug_name,)
+        )
+
+    except Exception as e:
+        raise Exception(e, sys)
 
     if drug_reviews.empty:
         return ""
 
-    # Always sample max 80 reviews
     max_reviews = 80
     if len(drug_reviews) > max_reviews:
         drug_reviews = drug_reviews.sample(n=max_reviews, random_state=42)
 
-    combined_text = " ".join(drug_reviews.astype(str))
+    combined_text = " ".join(drug_reviews["review"].astype(str))
+
     return combined_text
 
-# PROMPTS
+
 map_template = """
 Analyze this patient review portion for {drug_name}:
 {text}
@@ -92,7 +94,7 @@ reduce_prompt = PromptTemplate(
     template=reduce_template
 )
 
-# SUMMARIZATION PIPELINE
+
 def summarize_drug_reviews(drug_name, combined_reviews):
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=4000,
@@ -116,11 +118,13 @@ def summarize_drug_reviews(drug_name, combined_reviews):
 
     return result["output_text"]
 
+
 def call_summarization(drug_name):
     text = get_combined_reviews(drug_name)
     if not text:
         return f"No reviews found for {drug_name}"
     return summarize_drug_reviews(drug_name, text)
 
-# TEST
-print(call_summarization("Integra"))
+
+if __name__ == "__main__":
+    print(call_summarization("Integra"))

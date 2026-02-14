@@ -4,7 +4,7 @@ from datetime import datetime
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append("/opt/airflow/src")
 from src.Text_preprocessing import run_preprocessing
 
 with DAG(

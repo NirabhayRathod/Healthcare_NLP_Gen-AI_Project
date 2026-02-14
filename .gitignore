@@ -10,6 +10,11 @@ __pycache__/
 # C extensions
 *.so
 
+airflow/.env
+airflow/logs/
+airflow/airflow.db
+airflow/*.log
+
 # Distribution / packaging
 .Python
 build/

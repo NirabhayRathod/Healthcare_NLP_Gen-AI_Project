@@ -12,8 +12,10 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+ENV PYTHONPATH=/app/src
+
+COPY streamlit/requirements.streamlit.txt .
+RUN pip install --no-cache-dir -r requirements.streamlit.txt
 
 RUN python -m nltk.downloader punkt stopwords wordnet
 
@@ -21,4 +23,4 @@ COPY . .
 
 EXPOSE 8501
 
-CMD ["streamlit", "run", "App1.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "streamlit/App1.py", "--server.port=8501", "--server.address=0.0.0.0"]

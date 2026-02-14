@@ -39,7 +39,7 @@ def run_preprocessing():
     FROM raw_data
     WHERE uniqueID NOT IN (
         SELECT uniqueID FROM processed_data
-    );
+    ) ;
     """
 
     data = pd.read_sql(query, engine)

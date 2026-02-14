@@ -1,7 +1,5 @@
 pandas
 numpy
-scikit-learn
-scipy
 nltk
 joblib
 matplotlib
@@ -12,4 +10,8 @@ langchain-community
 groq
 python-dotenv
 requests
-airflow
+pymysql
+streamlit
+pytest
+sqlalchemy
+nltk==3.8.1

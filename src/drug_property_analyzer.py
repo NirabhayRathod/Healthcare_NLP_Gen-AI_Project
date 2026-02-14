@@ -1,6 +1,8 @@
 import pandas as pd
 import sys, os
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 from logger import logging
@@ -16,18 +18,6 @@ try:
         pool_pre_ping=True
     )
     logging.info("Connected to AWS RDS successfully")
-except Exception as e:
-    raise CustomException(e, sys)
-
-logging.info("Data reading started for 'drug property analyzer'")
-
-try:
-    query = """
-    SELECT drugName, conditions, review, rating
-    FROM processed_data
-    """
-    data = pd.read_sql(query, engine)
-    logging.info("Data reading completed from AWS RDS")
 except Exception as e:
     raise CustomException(e, sys)
  
@@ -151,7 +141,20 @@ medical_properties = {
 def get_drug_property_percentages(drug_name):
     logging.info("get_drug_property_percentages function called")
 
-    drug_reviews = data[data['drugName'] == drug_name]
+    try:
+        query = """
+        SELECT drugName, conditions, review, rating
+        FROM processed_data
+        WHERE drugName = %s
+        """
+        drug_reviews = pd.read_sql(
+            query,
+            engine,
+            params=(drug_name,)
+        )
+
+    except Exception as e:
+        raise CustomException(e, sys)
 
     if drug_reviews.empty:
         return f"No reviews found for {drug_name}"
@@ -174,8 +177,11 @@ def get_drug_property_percentages(drug_name):
         output_lines.append(f"- {condition}: {count} reviews ({pct:.1f}%)")
 
     output_lines.append("\n**Medical Properties Analysis:**")
+
     for prop, pct in results.items():
-        output_lines.append(f"- {pct}% of reviews mention {prop.replace('_', ' ').title()}")
+        output_lines.append(
+            f"- {pct}% of reviews mention {prop.replace('_', ' ').title()}"
+        )
 
     output_lines.append(
         f"\n**Overall Stats:** {len(drug_reviews)} reviews, "
@@ -184,5 +190,7 @@ def get_drug_property_percentages(drug_name):
 
     return output_lines
 
-# EXAMPLE USAGE
-print("\n".join(get_drug_property_percentages("Integra")))
+
+# Example usage
+if __name__ == "__main__":
+    print("\n".join(get_drug_property_percentages("Integra")))

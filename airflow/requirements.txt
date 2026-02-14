@@ -1,0 +1,11 @@
+pandas
+numpy
+sqlalchemy
+pymysql
+python-dotenv
+nltk
+langchain
+langchain-core
+langchain-community
+groq
+requests
