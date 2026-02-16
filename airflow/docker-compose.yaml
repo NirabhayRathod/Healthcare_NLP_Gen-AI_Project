@@ -10,9 +10,11 @@ x-airflow-common:
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
     AIRFLOW__CORE__FERNET_KEY: ""
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+
+    # Install your project dependencies
     _PIP_ADDITIONAL_REQUIREMENTS: -r /requirements.txt
 
-    # Your AWS RDS ENV VARIABLES
+    # AWS RDS ENV VARIABLES
     DB_HOST: ${DB_HOST}
     DB_PORT: ${DB_PORT}
     DB_USER: ${DB_USER}
@@ -35,6 +37,7 @@ x-airflow-common:
 
 services:
 
+  # Airflow Metadata Database (NOT your RDS)
   postgres:
     image: postgres:13
     environment:
@@ -50,6 +53,24 @@ services:
       start_period: 5s
     restart: always
 
+  # Initialize Airflow (Professional Setup)
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate &&
+        airflow users create \
+          --username airflow \
+          --password airflow \
+          --firstname admin \
+          --lastname admin \
+          --role Admin \
+          --email nirbhay105633016@example.com
+    user: "0:0"
+
+  # Webserver (UI)
   airflow-webserver:
     <<: *airflow-common
     command: webserver
@@ -57,16 +78,18 @@ services:
       - "8080:8080"
     restart: always
     depends_on:
-      postgres:
-        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
 
+  # Scheduler (Runs DAGs)
   airflow-scheduler:
     <<: *airflow-common
     command: scheduler
     restart: always
     depends_on:
-      postgres:
-        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
 
 volumes:
   postgres-db-volume:
+
