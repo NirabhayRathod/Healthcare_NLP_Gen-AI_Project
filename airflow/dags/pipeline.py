@@ -9,7 +9,7 @@ from src.Text_preprocessing import run_preprocessing
 
 with DAG(
     dag_id="drug_review_preprocessing",
-    start_date=datetime(2024, 2, 1),
+    start_date=datetime(2026, 2, 17),
     schedule="@weekly",
     catchup=False,
     default_args={
