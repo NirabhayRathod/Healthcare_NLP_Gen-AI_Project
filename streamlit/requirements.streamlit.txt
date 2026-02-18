@@ -4,10 +4,6 @@ nltk
 joblib
 matplotlib
 seaborn
-langchain
-langchain-core
-langchain_groq
-langchain-community
 groq
 python-dotenv
 requests
@@ -16,4 +12,9 @@ streamlit
 pytest
 sqlalchemy
 nltk==3.8.1
-langchain-chains
+
+
+langchain==0.3.25
+langchain-community==0.3.12
+langchain-core==0.3.55
+langchain-groq==0.1.6
