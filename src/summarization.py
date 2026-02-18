@@ -29,8 +29,9 @@ from langchain_groq import ChatGroq
 llm = ChatGroq(model="llama-3.1-8b-instant", api_key=api_key)
 
 from langchain_core.prompts import PromptTemplate
-from langchain.chains.summarize import load_summarize_chain
+from langchain.chains.summarize import load_summarize_chain 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+
 
 
 def get_combined_reviews(drug_name):
@@ -112,7 +113,7 @@ def summarize_drug_reviews(drug_name, combined_reviews):
     )
 
     result = summary_chain.invoke({
-        "input_documents": docs,
+        "input_documents": docs,  
         "drug_name": drug_name
     })
 
