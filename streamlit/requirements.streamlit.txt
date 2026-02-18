@@ -16,3 +16,4 @@ streamlit
 pytest
 sqlalchemy
 nltk==3.8.1
+langchain-chains
