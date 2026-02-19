@@ -1,4 +1,4 @@
-# Core dependencies with specific versions
+# Core dependencies
 pandas==2.0.3
 numpy==1.24.3
 nltk==3.8.1
@@ -12,10 +12,10 @@ streamlit==1.28.1
 pytest==7.4.2
 sqlalchemy==2.0.20
 
-# LangChain ecosystem - COMPATIBLE VERSIONS
-langchain==0.1.0
-langchain-community==0.0.13 
-langchain-core==0.1.19     
+# LangChain ecosystem - PERFECTLY COMPATIBLE VERSIONS
+langchain==0.1.20
+langchain-community==0.0.38
+langchain-core==0.1.52
 langchain-groq==0.1.0
 groq==0.4.2
 
