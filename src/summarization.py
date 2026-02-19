@@ -29,7 +29,7 @@ from langchain_groq import ChatGroq
 llm = ChatGroq(model="llama-3.1-8b-instant", api_key=api_key)
 
 from langchain_core.prompts import PromptTemplate
-from langchain.chains import  load_summarize_chain 
+from langchain.chains.summarize import load_summarize_chain 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 
