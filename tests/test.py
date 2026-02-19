@@ -85,18 +85,7 @@ except Exception as e:
 
 
 try:
-    import groq
     from langchain_groq import ChatGroq
-
-    # Monkey-patch groq.Client to ignore 'proxies' argument
-    original_init = groq.Client.__init__
-    
-    def patched_init(self, *args, **kwargs):
-        # Remove 'proxies' if present (your groq version doesn't accept it)
-        kwargs.pop('proxies', None)
-        original_init(self, *args, **kwargs)
-    
-    groq.Client.__init__ = patched_init
 
     # Now initialize ChatGroq normally
     llm = ChatGroq(
