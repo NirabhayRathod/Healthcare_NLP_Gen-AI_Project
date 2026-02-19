@@ -23,10 +23,10 @@ except Exception as e:
     raise Exception(e, sys)
 
 
-api_key = os.getenv("GROQ_API_KEY")
+os.getenv("GROQ_API_KEY")
 
 from langchain_groq import ChatGroq
-llm = ChatGroq(model="llama-3.1-8b-instant", api_key=api_key)
+llm = ChatGroq(model="llama-3.1-8b-instant")
 
 from langchain_core.prompts import PromptTemplate
 from langchain.chains.summarize import load_summarize_chain 
