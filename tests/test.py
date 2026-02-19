@@ -85,24 +85,31 @@ except Exception as e:
 
 
 try:
-    
     import groq
+    from langchain_groq import ChatGroq
+
+    # Monkey-patch groq.Client to ignore 'proxies' argument
+    original_init = groq.Client.__init__
     
-    client = groq.Client(
-        api_key=os.getenv("GROQ_API_KEY")
-    )
+    def patched_init(self, *args, **kwargs):
+        # Remove 'proxies' if present (your groq version doesn't accept it)
+        kwargs.pop('proxies', None)
+        original_init(self, *args, **kwargs)
     
-    # Make the API call
-    response = client.chat.completions.create(
+    groq.Client.__init__ = patched_init
+
+    # Now initialize ChatGroq normally
+    llm = ChatGroq(
         model="llama-3.1-8b-instant",
-        messages=[{"role": "user", "content": "Say OK."}]
+        groq_api_key=os.getenv("GROQ_API_KEY")
     )
-    
-    if response.choices and response.choices[0].message.content:
-        ok("LLM access verified")
-    else:
+
+    response = llm.invoke("Say OK.")
+
+    if not response.content:
         fail("Empty response from LLM")
-        
+
+    ok("LLM access verified")
 except Exception as e:
     fail("LLM test failed", e)
 
