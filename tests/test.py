@@ -85,16 +85,24 @@ except Exception as e:
 
 
 try:
-    from langchain_groq import ChatGroq
-
-    llm = ChatGroq(model="llama-3.1-8b-instant")  # <-- Just the model name, nothing else
-
-    response = llm.invoke("Say OK.")
-
-    if not response.content:
+    
+    import groq
+    
+    client = groq.Client(
+        api_key=os.getenv("GROQ_API_KEY")
+    )
+    
+    # Make the API call
+    response = client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[{"role": "user", "content": "Say OK."}]
+    )
+    
+    if response.choices and response.choices[0].message.content:
+        ok("LLM access verified")
+    else:
         fail("Empty response from LLM")
-
-    ok("LLM access verified")
+        
 except Exception as e:
     fail("LLM test failed", e)
 
