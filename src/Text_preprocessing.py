@@ -26,6 +26,7 @@ def run_preprocessing():
     nltk.download("punkt")
     nltk.download("stopwords")
     nltk.download("wordnet")
+    nltk.download("punkt_tab") 
     logging.info("punkt , stopwords , wordnet  downloaded")
     query = """
     SELECT

@@ -5,12 +5,12 @@ import os
 import sys
 
 sys.path.append("/opt/airflow/src")
-from src.Text_preprocessing import run_preprocessing
+from Text_preprocessing import run_preprocessing
 
 with DAG(
     dag_id="drug_review_preprocessing",
-    start_date=datetime(2026, 2, 17),
-    schedule="@weekly",
+    start_date=datetime(2026, 4, 17),
+    schedule=None,
     catchup=False,
     default_args={
         "owner": "mlops",
