@@ -87,7 +87,7 @@ except Exception as e:
 try:
     from langchain_groq import ChatGroq
 
-    # Now initialize ChatGroq normally
+    # initialize ChatGroq normally 
     llm = ChatGroq(
         model="llama-3.1-8b-instant",
         groq_api_key=os.getenv("GROQ_API_KEY")
