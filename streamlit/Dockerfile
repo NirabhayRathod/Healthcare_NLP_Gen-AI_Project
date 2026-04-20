@@ -26,4 +26,4 @@ RUN pip install --upgrade pip && \
 RUN python -m nltk.downloader punkt stopwords wordnet
 COPY . /app/
 EXPOSE 8501
-CMD ["streamlit", "run", "streamlit/App1.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "streamlit/App.py", "--server.port=8501", "--server.address=0.0.0.0"]
