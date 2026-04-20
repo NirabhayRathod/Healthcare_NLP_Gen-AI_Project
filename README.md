@@ -74,10 +74,19 @@ Manual analysis required for insights
 
 **We transformed unstructured patient feedback into quantifiable, actionable medical intelligence!** 🚀
 
+<img width="1918" height="865" alt="Screenshot 2026-04-20 123420" src="https://github.com/user-attachments/assets/751d607b-daa3-4338-bffb-595548011daf" />
+<img width="1919" height="855" alt="Screenshot 2026-04-20 123447" src="https://github.com/user-attachments/assets/0864d947-16a9-4973-b426-47b56bde61a0" />
+<img width="1870" height="866" alt="Screenshot 2026-04-20 123509" src="https://github.com/user-attachments/assets/295beb8d-c6a1-4e4b-a668-de298d968be9" />
+<img width="1917" height="872" alt="Screenshot 2026-04-20 123621" src="https://github.com/user-attachments/assets/c3c72b9b-933b-4798-a846-7dd037a18ad5" />
+<img width="1916" height="845" alt="Screenshot 2026-04-20 123639" src="https://github.com/user-attachments/assets/753d0fc1-40bf-4308-9ba2-c086fe5853e9" />
+<img width="1894" height="868" alt="Screenshot 2026-04-20 123654" src="https://github.com/user-attachments/assets/7ada8abf-7b54-4309-8060-0920ea7773b0" />
+
+
+
 ---
 **Developed by:** [Nirabhay Singh Rathod]  
 **Contact:** [nirbhay105633016@gmail.com]  
 **Project:** Drug Review Analytics Platform  
-**Technologies:** Python, Power BI, Data Analytics, Generative AI
+**Technologies:** Python, Power BI, Data Analytics, Generative AI , AWS RDS , Docker
 
 *Transforming patient experiences into actionable healthcare insights* 💊✨
